@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Armado de Pedidos</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <p class="eyebrow">Pedido de accesorios</p>
+        <h1>Gestión compacta de materiales y embalajes</h1>
+        <p class="topbar-copy">La vista principal prioriza la carga rápida. Catálogo, búsqueda y exportación quedan separados para trabajar más limpio.</p>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="new-order" class="ghost-button">Nuevo pedido</button>
+        <button id="export-image" class="primary-button">Exportar imagen</button>
+        <button id="export-pdf" class="secondary-button">Exportar PDF</button>
+      </div>
+    </header>
+
+    <nav class="tabbar" aria-label="Secciones">
+      <button type="button" class="tab-button active" data-tab-target="workspace-tab">Carga</button>
+      <button type="button" class="tab-button" data-tab-target="tools-tab">Herramientas</button>
+    </nav>
+
+    <main>
+      <section id="workspace-tab" class="tab-panel active">
+        <div class="workspace-layout">
+          <aside class="operations-column">
+            <section class="card hero-card">
+              <div class="hero-grid">
+                <div>
+                  <span class="label">Cliente</span>
+                  <input type="text" id="order-client" class="hero-input" placeholder="Opcional">
+                </div>
+                <div>
+                  <span class="label">Orden</span>
+                  <input type="text" id="order-number" class="hero-input" placeholder="Opcional">
+                </div>
+                <div>
+                  <span class="label">Fecha</span>
+                  <strong id="summary-date"></strong>
+                </div>
+              </div>
+              <div class="hero-stats">
+                <div><span class="label">Materiales</span><strong id="total-items">0</strong></div>
+                <div><span class="label">Piezas</span><strong id="total-pieces">0</strong></div>
+                <div><span class="label">Embalajes</span><strong id="total-packaging">0</strong></div>
+              </div>
+            </section>
+
+            <section class="card form-card">
+              <div class="section-header">
+                <div>
+                  <h2>Embalajes</h2>
+                  <p>Definí pallets, cajas o bultos y su ubicación dentro de la estructura.</p>
+                </div>
+              </div>
+
+              <form id="packaging-form" class="compact-form">
+                <input type="hidden" id="packaging-id">
+
+                <label>
+                  Nombre
+                  <input type="text" id="packaging-name" placeholder="Caja 1 / Pallet A" required>
+                </label>
+
+                <div class="inline-grid">
+                  <label>
+                    Tipo
+                    <select id="packaging-type" required>
+                      <option value="Caja">Caja</option>
+                      <option value="Bulto">Bulto</option>
+                      <option value="Pallet">Pallet</option>
+                      <option value="Contenedor">Contenedor</option>
+                      <option value="Otro">Otro</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    Embalaje padre
+                    <select id="packaging-parent">
+                      <option value="">Sin embalaje padre</option>
+                    </select>
+                  </label>
+                </div>
+
+                <div class="button-row">
+                  <button type="submit" class="primary-button" id="packaging-submit">Agregar</button>
+                  <button type="button" class="ghost-button hidden" id="packaging-cancel">Cancelar</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="card form-card accent-card">
+              <div class="section-header">
+                <div>
+                  <h2>Materiales</h2>
+                  <p>Carga principal del pedido. Código y descripción pueden autocompletarse desde catálogo.</p>
+                </div>
+              </div>
+
+              <form id="item-form" class="compact-form">
+                <input type="hidden" id="item-id">
+
+                <div class="inline-grid">
+                  <label>
+                    Código
+                    <input type="text" id="item-code" placeholder="Código de pieza" list="catalog-codes">
+                  </label>
+
+                  <label>
+                    Cantidad
+                    <input type="number" id="item-quantity" min="1" step="1" placeholder="24" required>
+                  </label>
+                </div>
+
+                <label>
+                  Descripción
+                  <input type="text" id="item-description" placeholder="Material o accesorio" list="catalog-descriptions" required>
+                </label>
+
+                <label>
+                  Embalaje
+                  <select id="item-packaging" required>
+                    <option value="">Seleccionar</option>
+                  </select>
+                </label>
+
+                <div class="button-row">
+                  <button type="submit" class="primary-button" id="item-submit">Agregar</button>
+                  <button type="button" class="ghost-button hidden" id="item-cancel">Cancelar</button>
+                </div>
+              </form>
+            </section>
+          </aside>
+
+          <section class="card preview-card" id="summary-area">
+            <div class="preview-top">
+              <div>
+                <span class="label">Cliente</span>
+                <strong id="summary-client">Sin cliente</strong>
+              </div>
+              <div>
+                <span class="label">Orden</span>
+                <strong id="summary-order">Sin orden</strong>
+              </div>
+              <div>
+                <span class="label">Exportación</span>
+                <strong id="distribution-chip">Esquema incluido</strong>
+              </div>
+            </div>
+
+            <div class="preview-body">
+              <div class="section-block compact-alert hidden-section" id="validation-box"></div>
+
+              <div class="section-block">
+                <div class="section-head">
+                  <h3>Detalle del pedido</h3>
+                  <span class="helper-text">Arrastrá materiales o embalajes para reorganizar</span>
+                </div>
+                <div id="summary-tree" class="summary-tree"></div>
+              </div>
+
+              <div class="section-block" id="distribution-section">
+                <div class="section-head">
+                  <h3>Distribución</h3>
+                </div>
+                <div id="distribution-tree" class="distribution-tree"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="tools-tab" class="tab-panel">
+        <div class="tools-layout">
+          <section class="card slim-card">
+            <div class="section-header">
+              <div>
+                <h2>Catálogo</h2>
+                <p>Importá artículos desde CSV o Excel (`.xlsx`) con columnas `codigo` y `descripcion`.</p>
+              </div>
+            </div>
+
+            <div class="button-row">
+              <button type="button" id="import-catalog" class="ghost-button">Importar catálogo</button>
+              <button type="button" id="clear-catalog" class="ghost-button">Limpiar catálogo</button>
+              <input type="file" id="catalog-file-input" accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+            </div>
+
+            <div class="status-line" id="catalog-status">Sin catálogo cargado</div>
+          </section>
+
+          <section class="card slim-card">
+            <div class="section-header">
+              <div>
+                <h2>Búsqueda</h2>
+                <p>Filtrá la vista previa por código, embalaje o material.</p>
+              </div>
+            </div>
+
+            <form id="filter-form" class="compact-form">
+              <label>
+                Buscar
+                <input type="text" id="search-query" placeholder="Ej: Caja 1, tornillo, PAL-001">
+              </label>
+
+              <label>
+                Ver solo
+                <select id="filter-type">
+                  <option value="all">Todo</option>
+                  <option value="packaging">Solo embalajes</option>
+                  <option value="items">Solo materiales</option>
+                </select>
+              </label>
+            </form>
+          </section>
+
+          <section class="card slim-card">
+            <div class="section-header">
+              <div>
+                <h2>Exportación</h2>
+                <p>Elegí si querés sacar todo el pedido o solo pallets, cajas o bultos puntuales.</p>
+              </div>
+            </div>
+
+            <form id="export-form" class="compact-form">
+              <label class="toggle-row">
+                <span>Incluir esquema de distribución al exportar</span>
+                <input type="checkbox" id="include-distribution" checked>
+              </label>
+
+              <label class="toggle-row">
+                <span>Modo carga rápida para móvil</span>
+                <input type="checkbox" id="quick-mode">
+              </label>
+
+              <label>
+                Alcance
+                <select id="export-scope">
+                  <option value="all">Todo el pedido</option>
+                  <option value="selected">Solo embalajes seleccionados</option>
+                </select>
+              </label>
+
+              <div id="export-selection-box" class="selection-box hidden-section">
+                <label>
+                  Buscar en exportación
+                  <input type="text" id="export-selection-search" placeholder="Buscar pallet, caja o código">
+                </label>
+
+                <div class="selection-head">
+                  <strong>Embalajes a exportar</strong>
+                  <div class="selection-actions">
+                    <button type="button" id="select-all-export" class="mini-button">Todos</button>
+                    <button type="button" id="select-pallets-export" class="mini-button">Solo pallets</button>
+                    <button type="button" id="select-boxes-export" class="mini-button">Solo cajas</button>
+                    <button type="button" id="select-bundles-export" class="mini-button">Solo bultos</button>
+                    <button type="button" id="clear-export-selection" class="mini-button">Limpiar</button>
+                  </div>
+                </div>
+                <div id="export-selection-list" class="selection-list"></div>
+              </div>
+
+              <div class="button-row">
+                <button type="button" id="export-csv" class="ghost-button">Exportar CSV</button>
+                <button type="button" id="import-csv" class="ghost-button">Importar pedido CSV</button>
+                <input type="file" id="csv-file-input" accept=".csv,text/csv" hidden>
+              </div>
+
+              <div class="status-line" id="autosave-status">Guardado automático activo</div>
+            </form>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <datalist id="catalog-codes"></datalist>
+  <datalist id="catalog-descriptions"></datalist>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
